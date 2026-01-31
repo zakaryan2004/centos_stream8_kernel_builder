@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,30 +13,28 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Println("Usage: build-stream8-kernel <src.rpm|url> <outfolder> [arch]")
+	srpmInput := flag.String("srpm", "", "Path to SRPM file or URL (required)")
+	outFolder := flag.String("out", "", "Output folder for built RPMs (required)")
+	arch := flag.String("arch", runtime.GOARCH, "Target architecture (e.g., amd64, arm64)")
+	flag.Parse()
+
+	if *srpmInput == "" || *outFolder == "" {
+		flag.Usage()
 		os.Exit(1)
 	}
 
-	srpmInput := os.Args[1]
-	outFolder := os.Args[2]
-
-	// Use provided architecture or default to host architecture
-	arch := "linux/" + runtime.GOARCH
-	if len(os.Args) >= 4 {
-		arch = "linux/" + os.Args[3]
-	}
-	fmt.Printf(">>> Using Architecture: %s\n", arch)
+	platform := "linux/" + *arch
+	fmt.Printf(">>> Using Architecture: %s\n", platform)
 
 	// Ensure output dir exists
-	if err := os.MkdirAll(outFolder, 0755); err != nil {
+	if err := os.MkdirAll(*outFolder, 0755); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: Failed to create output dir: %v\n", err)
 		os.Exit(1)
 	}
 
 	// Determine the SRPM file path
 	var srpmPath string
-	if strings.HasPrefix(srpmInput, "http") {
+	if strings.HasPrefix(*srpmInput, "http") {
 		// Download to /tmp
 		fmt.Println(">>> Downloading SRPM from URL...")
 		tmpFile, err := os.CreateTemp("", "kernel-*.src.rpm")
@@ -47,14 +46,14 @@ func main() {
 		srpmPath = tmpFile.Name()
 		defer os.Remove(srpmPath)
 
-		if err := downloadFile(srpmInput, srpmPath); err != nil {
+		if err := downloadFile(*srpmInput, srpmPath); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: Download failed: %v\n", err)
 			os.Exit(1)
 		}
 	} else {
 		// Use local file directly
 		fmt.Println(">>> Using local SRPM...")
-		absPath, err := filepath.Abs(srpmInput)
+		absPath, err := filepath.Abs(*srpmInput)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: Failed to get absolute path: %v\n", err)
 			os.Exit(1)
@@ -64,7 +63,7 @@ func main() {
 
 	// Build Docker Image
 	fmt.Println(">>> Building Docker Image...")
-	buildCmd := exec.Command("docker", "build", "--platform", arch, "-t", "kernel-builder", ".")
+	buildCmd := exec.Command("docker", "build", "--platform", platform, "-t", "kernel-builder", ".")
 	buildCmd.Stdout = os.Stdout
 	buildCmd.Stderr = os.Stderr
 	if err := buildCmd.Run(); err != nil {
@@ -76,10 +75,10 @@ func main() {
 	fmt.Println(">>> Running Docker Container...")
 
 	// Get absolute path for the output volume
-	absOut, _ := filepath.Abs(outFolder)
+	absOut, _ := filepath.Abs(*outFolder)
 
 	runCmd := exec.Command("docker", "run",
-		"--platform", arch,
+		"--platform", platform,
 		"--rm",
 		"-v", fmt.Sprintf("%s:/src/kernel.src.rpm:ro", srpmPath),
 		"-v", fmt.Sprintf("%s:/home/kernelbuilder/output", absOut),
@@ -92,7 +91,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf(">>> Build complete. RPMs are in: %s\n", outFolder)
+	fmt.Printf(">>> Build complete. RPMs are in: %s\n", *outFolder)
 }
 
 func downloadFile(url string, dest string) error {
