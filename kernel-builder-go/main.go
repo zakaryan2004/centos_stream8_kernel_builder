@@ -80,6 +80,7 @@ func main() {
 
 	dockerArgs := []string{
 		"run",
+		"--rm",
 		// "-it", "--entrypoint", "", if you want to run interactive terminal, uncomment this
 		"--platform", platform,
 		"-v", fmt.Sprintf("%s:/src/kernel.src.rpm:ro", srpmPath),
@@ -97,7 +98,7 @@ func main() {
 		dockerArgs = append(dockerArgs, "-v", fmt.Sprintf("%s:/patches:ro", absPatchesDir))
 	}
 
-	dockerArgs = append(dockerArgs, "kernel-builder", "/bin/bash")
+	dockerArgs = append(dockerArgs, "kernel-builder") // set /bin/bash if interactive
 
 	runCmd := exec.Command("docker", dockerArgs...)
 	runCmd.Stdout = os.Stdout
