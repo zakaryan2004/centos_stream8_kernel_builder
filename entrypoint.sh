@@ -21,7 +21,7 @@ if [ -d "/patches" ] && ls /patches/*.patch 1>/dev/null 2>&1; then
     cp kernel.spec kernel.spec.distro
 
     # Uncomment and set buildid (TODO check if this ALWAYS exists)
-    sed -i 's/^#\s*%define buildid\s.*$/%define buildid .patched/' kernel.spec
+    sed -i 's/^.*define buildid.*$/%define buildid .patched/' kernel.spec
 
     # Start patch numbering from 40000 to avoid conflicts with other patches
     PATCH_NUM=40000
