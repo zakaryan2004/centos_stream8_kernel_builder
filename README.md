@@ -6,7 +6,7 @@ Disclaimer: This is a technical task for CloudLinux. It is not intended for prod
 - CentOS Wiki: [I Need the Kernel Source](https://wiki.centos.org/HowTos(2f)I_need_the_Kernel_Source.html)
 - CentOS Wiki: [I Need to Build a Custom Kernel](https://wiki.centos.org/HowTos(2f)Custom_Kernel.html)
 
-# Quick start:
+# Quick Start:
 
 ## How to Run the Normal Build (Task 1 + 2)
 
@@ -24,7 +24,7 @@ make -C kernel-builder-go/
 make -C kernel-builder-go/
 make -C patch-srpm-go/
 # First, create the patched SRPM
-./patch-stream8-srpm --srpm /path/to/kernel.src.rpm --out ./srcout --patches /path/to/patches_dir
+./patch-stream8-srpm --srpm /path/to/kernel.src.rpm --out ./srcout --patches ./patches
 # Then, build the kernel using the patched SRPM
 ./build-stream8-kernel ./srcout/kernel-*.src.rpm ./out
 ```
