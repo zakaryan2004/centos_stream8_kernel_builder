@@ -14,7 +14,7 @@ Disclaimer: This is a technical task for CloudLinux. It is not intended for prod
 # Build the Go tool
 make -C kernel-builder-go/
 # Then run the build (specify arch if needed, e.g., --arch arm64)
-./build-stream8-kernel --srpm /path/to/kernel.src.rpm --out ./out
+./build-stream8-kernel --srpm https://vault.centos.org/8-stream/BaseOS/Source/SPackages/kernel-4.18.0-448.el8.src.rpm --out ./out
 ```
 
 ## How to Generate a Patched SRPM and Build It (Task 3)
@@ -24,9 +24,9 @@ make -C kernel-builder-go/
 make -C kernel-builder-go/
 make -C patch-srpm-go/
 # First, create the patched SRPM
-./patch-stream8-srpm --srpm /path/to/kernel.src.rpm --out ./srcout --patches ./patches
+./patch-stream8-srpm --srpm https://vault.centos.org/8-stream/BaseOS/Source/SPackages/kernel-4.18.0-448.el8.src.rpm --out ./srcout --patches ./patches
 # Then, build the kernel using the patched SRPM
-./build-stream8-kernel ./srcout/kernel-*.src.rpm ./out
+./build-stream8-kernel ./srcout/kernel-*.patched.src.rpm ./out
 ```
 
 The produced RPMs and SRPMs will be in the `out/` directory.
