@@ -1,3 +1,4 @@
 out/
 build-stream8-kernel
+patch-stream8-srpm
 kernel-*.rpm
