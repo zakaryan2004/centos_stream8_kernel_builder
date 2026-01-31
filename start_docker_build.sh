@@ -7,7 +7,7 @@ set -e
 # and run the container to perform the build.
 
 SRPM_INPUT="$1"
-ARCH="${2:-aarch64}"
+ARCH="${2:-$(uname -m)}"
 if [ -z "$SRPM_INPUT" ]; then
     echo "Error: No SRPM provided"
     exit 1
