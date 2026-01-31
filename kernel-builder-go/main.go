@@ -15,6 +15,7 @@ import (
 func main() {
 	srpmInput := flag.String("srpm", "", "Path to SRPM file or URL (required)")
 	outFolder := flag.String("out", "", "Output folder for built RPMs (required)")
+	patchesDir := flag.String("patches", "", "Directory containing patch files to apply (optional)")
 	arch := flag.String("arch", runtime.GOARCH, "Target architecture (e.g., amd64, arm64)")
 	flag.Parse()
 
@@ -77,15 +78,31 @@ func main() {
 	// Get absolute path for the output volume
 	absOut, _ := filepath.Abs(*outFolder)
 
-	runCmd := exec.Command("docker", "run",
+	dockerArgs := []string{
+		"run",
+		// "-it", "--entrypoint", "", if you want to run interactive terminal, uncomment this
 		"--platform", platform,
-		"--rm",
 		"-v", fmt.Sprintf("%s:/src/kernel.src.rpm:ro", srpmPath),
 		"-v", fmt.Sprintf("%s:/home/kernelbuilder/output", absOut),
-		"kernel-builder",
-	)
+	}
+
+	// Mount patches directory if provided
+	if *patchesDir != "" {
+		absPatchesDir, err := filepath.Abs(*patchesDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: Failed to get absolute path for patches: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf(">>> Using patches from: %s\n", absPatchesDir)
+		dockerArgs = append(dockerArgs, "-v", fmt.Sprintf("%s:/patches:ro", absPatchesDir))
+	}
+
+	dockerArgs = append(dockerArgs, "kernel-builder", "/bin/bash")
+
+	runCmd := exec.Command("docker", dockerArgs...)
 	runCmd.Stdout = os.Stdout
 	runCmd.Stderr = os.Stderr
+	runCmd.Stdin = os.Stdin
 	if err := runCmd.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: Docker run failed: %v\n", err)
 		os.Exit(1)
